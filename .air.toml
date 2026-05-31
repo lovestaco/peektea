@@ -1,0 +1,18 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/peektea ."
+  bin = "./tmp/peektea"
+  delay = 300
+  exclude_dir = ["tmp"]
+  include_ext = ["go"]
+  send_interrupt = true
+  kill_delay = "200ms"
+
+[log]
+  time = false
+  main_only = true
+
+[misc]
+  clean_on_exit = true
