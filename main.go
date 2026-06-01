@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -11,22 +12,27 @@ import (
 )
 
 var (
-	cursorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-	dirStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
-	fileStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
-	pathStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
-	selectedBg     = lipgloss.NewStyle().Background(lipgloss.Color("236"))
+	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+	dirStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
+	fileStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+	pathStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
+	selectedBg  = lipgloss.NewStyle().Background(lipgloss.Color("236"))
+	errorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 )
+
+type openResultMsg struct{ err error }
 
 type model struct {
 	dir     string
 	entries []os.DirEntry
 	cursor  int
 	err     error
+	status  string
+	config  Config
 }
 
 func newModel(dir string) model {
-	m := model{dir: dir}
+	m := model{dir: dir, config: loadConfig()}
 	m.entries, m.err = os.ReadDir(dir)
 	return m
 }
@@ -37,7 +43,14 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case openResultMsg:
+		if msg.err != nil {
+			m.status = fmt.Sprintf("open failed: %v", msg.err)
+		}
+		return m, nil
+
 	case tea.KeyMsg:
+		m.status = ""
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -81,6 +94,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
+
+		case "o":
+			if len(m.entries) > 0 {
+				entry := m.entries[m.cursor]
+				prog := m.config.programFor(entry)
+				path := filepath.Join(m.dir, entry.Name())
+				if m.config.isTerminalApp(prog) {
+					cmd := exec.Command(prog, path)
+					return m, tea.ExecProcess(cmd, func(err error) tea.Msg {
+						return openResultMsg{err: err}
+					})
+				}
+				// GUI app — launch in background, don't block the TUI
+				cmd := exec.Command(prog, path)
+				if err := cmd.Start(); err != nil {
+					m.status = fmt.Sprintf("open failed: %v", err)
+				} else {
+					go cmd.Wait() //nolint — reap the child so it doesn't become a zombie
+				}
+			}
 		}
 	}
 	return m, nil
@@ -120,7 +153,10 @@ func (m model) View() string {
 		sb.WriteString(line + "\n")
 	}
 
-	sb.WriteString("\n" + pathStyle.Render("↑/↓ navigate  →/enter open  ←/backspace up  q quit"))
+	sb.WriteString("\n" + pathStyle.Render("↑/↓ navigate  →/enter go inside  o open  ←/backspace up  q quit"))
+	if m.status != "" {
+		sb.WriteString("\n" + errorStyle.Render(m.status))
+	}
 	return sb.String()
 }
 
