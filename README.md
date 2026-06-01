@@ -1,8 +1,12 @@
 # peektea
 
-![cover](cover.png)
+![cover](media/cover.png)
 
 A minimal terminal file browser built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). Navigate your filesystem from the terminal using arrow keys (or vim keys).
+
+## Demo
+
+![demo](media/demo.gif)
 
 ## Install
 
@@ -26,9 +30,20 @@ Starts in the current working directory.
 |-----|--------|
 | `↑` / `k` | move up |
 | `↓` / `j` | move down |
-| `→` / `l` / `enter` | open directory |
+| `→` / `l` / `enter` | go inside directory |
 | `←` / `h` / `backspace` | go to parent |
+| `o` | open with configured program |
 | `q` / `ctrl+c` | quit |
+
+## Setup
+
+Run `peektea init` to configure which apps open each file type. It peeks into your installed software and lets you pick.
+
+![peektea init](media/peek_tea_init.gif)
+
+## Help
+
+![peektea -h](media/help.png)
 
 ## Development
 

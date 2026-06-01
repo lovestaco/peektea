@@ -1,7 +1,7 @@
 BINARY := peektea
 INSTALL_DIR := $(shell go env GOPATH)/bin
 
-.PHONY: build install start config
+.PHONY: build install start rm
 
 build:
 	go build -o $(BINARY) .
@@ -12,9 +12,5 @@ install:
 start:
 	air
 
-config:
-	@if [ -f $(HOME)/.peektea.toml ]; then \
-		echo "$(HOME)/.peektea.toml already exists — not overwriting"; \
-	else \
-		cp default.peektea.toml $(HOME)/.peektea.toml && echo "Created $(HOME)/.peektea.toml"; \
-	fi
+rm:
+	rm -f ~/.peektea.toml && echo "Removed ~/.peektea.toml"
