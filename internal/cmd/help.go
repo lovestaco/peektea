@@ -1,8 +1,8 @@
-package main
+package cmd
 
 import "fmt"
 
-func runHelp() {
+func RunHelp() {
 	fmt.Println("peektea — a terminal file browser")
 	fmt.Println()
 	fmt.Println("Usage:")

@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func runUninstall() {
+func RunUninstall() {
 	bin, err := os.Executable()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not find binary path: %v\n", err)

@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"os"
@@ -17,7 +17,7 @@ var defaultTerminalApps = []string{
 	"vim", "nvim", "vi", "nano", "emacs", "micro", "hx", "helix", "joe", "mcedit",
 }
 
-func loadConfig() Config {
+func Load() Config {
 	home, _ := os.UserHomeDir()
 	path := filepath.Join(home, ".peektea.toml")
 
@@ -50,7 +50,7 @@ func loadConfig() Config {
 	return Config{data: data, terminalApps: terminalApps}
 }
 
-// programFor returns the configured opener for an entry.
+// ProgramFor returns the configured opener for an entry.
 // Key derivation: take everything after the first non-leading dot,
 // replace remaining dots with underscores, wrap with _ and _config.
 //
@@ -59,8 +59,8 @@ func loadConfig() Config {
 //	hello.xd.dd    → _xd_dd_config
 //	directory      → _dir_config
 //	no-extension   → _default_config
-func (c Config) programFor(entry os.DirEntry) string {
-	key := configKeyFor(entry)
+func (c Config) ProgramFor(entry os.DirEntry) string {
+	key := keyFor(entry)
 	if prog := c.data[key]; prog != "" {
 		return prog
 	}
@@ -70,11 +70,11 @@ func (c Config) programFor(entry os.DirEntry) string {
 	return "vim"
 }
 
-func (c Config) isTerminalApp(prog string) bool {
+func (c Config) IsTerminalApp(prog string) bool {
 	return c.terminalApps[prog]
 }
 
-func configKeyFor(entry os.DirEntry) string {
+func keyFor(entry os.DirEntry) string {
 	if entry.IsDir() {
 		return "_dir_config"
 	}

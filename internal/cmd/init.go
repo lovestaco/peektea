@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -9,6 +9,12 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+var (
+	pickerCursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#7DAD5C")).Bold(true)
+	pickerMuted  = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 )
 
 type category struct {
@@ -59,7 +65,7 @@ var setupCategories = []category{
 	},
 }
 
-func runInit() {
+func RunInit() {
 	home, _ := os.UserHomeDir()
 	dest := filepath.Join(home, ".peektea.toml")
 
@@ -92,7 +98,7 @@ func runInit() {
 				fmt.Printf("   none detected — using %s as fallback\n\n", chosen)
 			} else {
 				fmt.Println("   none detected — skipping")
-			fmt.Println()
+				fmt.Println()
 				continue
 			}
 		case 1:
@@ -116,7 +122,6 @@ func runInit() {
 	fmt.Printf("created %s\n", dest)
 }
 
-// pickerModel is a minimal inline Bubble Tea selector.
 type pickerModel struct {
 	options []string
 	cursor  int
@@ -141,7 +146,6 @@ func (m pickerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			os.Exit(0)
 		default:
-			// number key: jump and immediately confirm
 			if n, err := strconv.Atoi(msg.String()); err == nil && n >= 1 && n <= len(m.options) {
 				m.cursor = n - 1
 				return m, tea.Quit
@@ -155,12 +159,12 @@ func (m pickerModel) View() string {
 	var sb strings.Builder
 	for i, opt := range m.options {
 		if i == m.cursor {
-			sb.WriteString(cursorStyle.Render(fmt.Sprintf("  ▶ %d) %s", i+1, opt)) + "\n")
+			sb.WriteString(pickerCursor.Render(fmt.Sprintf("  ▶ %d) %s", i+1, opt)) + "\n")
 		} else {
-			sb.WriteString(pathStyle.Render(fmt.Sprintf("    %d) %s", i+1, opt)) + "\n")
+			sb.WriteString(pickerMuted.Render(fmt.Sprintf("    %d) %s", i+1, opt)) + "\n")
 		}
 	}
-	sb.WriteString("\n" + pathStyle.Render("  ↑/↓ or number  enter to confirm"))
+	sb.WriteString("\n" + pickerMuted.Render("  ↑/↓ or number  enter to confirm"))
 	return sb.String()
 }
 

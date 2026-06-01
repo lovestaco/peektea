@@ -9,6 +9,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/lovestaco/peektea/internal/cmd"
+	"github.com/lovestaco/peektea/internal/config"
 )
 
 var (
@@ -29,11 +32,11 @@ type model struct {
 	cursor  int
 	err     error
 	status  string
-	config  Config
+	config  config.Config
 }
 
 func newModel(dir string) model {
-	m := model{dir: dir, config: loadConfig()}
+	m := model{dir: dir, config: config.Load()}
 	m.entries, m.err = os.ReadDir(dir)
 	return m
 }
@@ -99,20 +102,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "o":
 			if len(m.entries) > 0 {
 				entry := m.entries[m.cursor]
-				prog := m.config.programFor(entry)
+				prog := m.config.ProgramFor(entry)
 				path := filepath.Join(m.dir, entry.Name())
-				if m.config.isTerminalApp(prog) {
-					cmd := exec.Command(prog, path)
-					return m, tea.ExecProcess(cmd, func(err error) tea.Msg {
+				if m.config.IsTerminalApp(prog) {
+					c := exec.Command(prog, path)
+					return m, tea.ExecProcess(c, func(err error) tea.Msg {
 						return openResultMsg{err: err}
 					})
 				}
 				// GUI app — launch in background, don't block the TUI
-				cmd := exec.Command(prog, path)
-				if err := cmd.Start(); err != nil {
+				c := exec.Command(prog, path)
+				if err := c.Start(); err != nil {
 					m.status = fmt.Sprintf("open failed: %v", err)
 				} else {
-					go cmd.Wait() //nolint — reap the child so it doesn't become a zombie
+					go c.Wait() //nolint — reap the child so it doesn't become a zombie
 				}
 			}
 		}
@@ -166,11 +169,11 @@ func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "init":
-			runInit()
+			cmd.RunInit()
 		case "uninstall":
-			runUninstall()
+			cmd.RunUninstall()
 		case "-h", "--help", "help":
-			runHelp()
+			cmd.RunHelp()
 		default:
 			fmt.Fprintf(os.Stderr, "unknown command: %s\n\nrun 'peektea -h' for help\n", os.Args[1])
 			os.Exit(1)
