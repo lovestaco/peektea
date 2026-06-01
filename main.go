@@ -12,12 +12,13 @@ import (
 )
 
 var (
-	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-	dirStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
-	fileStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
-	pathStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
-	selectedBg  = lipgloss.NewStyle().Background(lipgloss.Color("236"))
-	errorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+	cursorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+	dirStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
+	fileStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+	pathStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
+	selectedBg   = lipgloss.NewStyle().Background(lipgloss.Color("236"))
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+	taglineStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#7DAD5C")).Bold(true)
 )
 
 type openResultMsg struct{ err error }
@@ -125,6 +126,7 @@ func (m model) View() string {
 	}
 
 	var sb strings.Builder
+	sb.WriteString(taglineStyle.Render("peek-a-boo, filesystem.") + "\n\n")
 	sb.WriteString(pathStyle.Render(m.dir) + "\n\n")
 
 	if len(m.entries) == 0 {
@@ -161,6 +163,21 @@ func (m model) View() string {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "init":
+			runInit()
+		case "uninstall":
+			runUninstall()
+		case "-h", "--help", "help":
+			runHelp()
+		default:
+			fmt.Fprintf(os.Stderr, "unknown command: %s\n\nrun 'peektea -h' for help\n", os.Args[1])
+			os.Exit(1)
+		}
+		return
+	}
+
 	dir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
