@@ -40,7 +40,19 @@ Starts in the current working directory.
 | `→` / `l` / `enter` | go inside directory |
 | `←` / `h` / `backspace` | go to parent |
 | `o` | open with configured program |
+| `p` | toggle preview panel |
 | `q` / `ctrl+c` | quit |
+
+## Preview
+
+Press `p` to open a side-by-side preview panel. Press `p` again to close it.
+
+- **Text files** — first N lines rendered inline, truncated to panel width
+- **Images** — rendered directly in the terminal via [chafa](https://hpjansson.org/chafa/)
+- **Directories** — lists the contents of the folder
+- **Binary files** — shows a `[binary file]` notice
+
+The left panel auto-widens to fit the longest filename in the current directory. `peektea init` will tell you if chafa is installed and how to get it if not.
 
 ## Setup
 
