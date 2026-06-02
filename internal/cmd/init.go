@@ -120,6 +120,17 @@ func RunInit() {
 		os.Exit(1)
 	}
 	fmt.Printf("created %s\n", dest)
+
+	fmt.Println()
+	fmt.Println("── Image previews")
+	if _, err := exec.LookPath("chafa"); err != nil {
+		fmt.Println("   chafa not found — install it for inline image previews.")
+		fmt.Println("   Ubuntu/Debian : sudo apt install chafa")
+		fmt.Println("   Arch          : sudo pacman -S chafa")
+		fmt.Println("   macOS         : brew install chafa")
+	} else {
+		fmt.Println("   chafa found — image previews are ready.")
+	}
 }
 
 type pickerModel struct {

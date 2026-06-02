@@ -16,5 +16,6 @@ func RunHelp() {
 	fmt.Println("  →    l/enter    go inside directory")
 	fmt.Println("  ←    h/backspace  go to parent")
 	fmt.Println("  o               open with configured program")
+	fmt.Println("  p               toggle preview panel (text + images via chafa)")
 	fmt.Println("  q    ctrl+c     quit")
 }
