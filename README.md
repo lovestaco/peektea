@@ -41,7 +41,20 @@ Starts in the current working directory.
 | `←` / `h` / `backspace` | go to parent |
 | `o` | open with configured program |
 | `p` | toggle preview panel |
+| `/` | filter entries as you type |
+| `esc` | exit filter / clear active filter |
+| `.` | toggle hidden files (dotfiles) |
 | `q` / `ctrl+c` | quit |
+
+## Filter
+
+Press `/` to enter filter mode. Type anything and the list narrows to matching entries in real time. The filter input appears at the bottom of the panel above the hint bar — like vim's command line.
+
+- `enter` — confirm and exit filter mode (filter stays active)
+- `esc` — clear the filter entirely
+- `↑` / `↓` still navigate while you type
+
+Press `.` to toggle hidden files (dotfiles) on and off. The hint bar always shows the current state: `. show hidden` or `. hide hidden`. Both filters compose — you can search by name with dotfiles visible or hidden at the same time.
 
 ## Preview
 
@@ -127,6 +140,7 @@ Requires [air](https://github.com/air-verse/air) for `make start` (`go install g
 ## Stack
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) — TUI framework (Elm Architecture)
+- [Bubbles](https://github.com/charmbracelet/bubbles) — TUI components (textinput for filter)
 - [Lipgloss](https://github.com/charmbracelet/lipgloss) — terminal styling
 
 ---

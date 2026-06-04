@@ -17,5 +17,8 @@ func RunHelp() {
 	fmt.Println("  ←    h/backspace  go to parent")
 	fmt.Println("  o               open with configured program")
 	fmt.Println("  p               toggle preview panel (text + images via chafa)")
+	fmt.Println("  /               filter entries as you type")
+	fmt.Println("  esc             exit filter / clear active filter")
+	fmt.Println("  .               toggle hidden files (dotfiles)")
 	fmt.Println("  q    ctrl+c     quit")
 }

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -24,6 +25,7 @@ var (
 	errorStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 	taglineStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#7DAD5C")).Bold(true)
 	previewHdrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+	filterTagStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
 	panelBorder     = lipgloss.NewStyle().
 				BorderLeft(true).
 				BorderStyle(lipgloss.NormalBorder()).
@@ -36,6 +38,7 @@ type previewMsg struct{ content string }
 
 type model struct {
 	dir            string
+	allEntries     []os.DirEntry
 	entries        []os.DirEntry
 	cursor         int
 	err            error
@@ -46,11 +49,47 @@ type model struct {
 	showPreview    bool
 	previewContent string
 	previewLoading bool
+	showHidden     bool
+	filterInput    textinput.Model
+	filtering      bool
 }
 
 func newModel(dir string) model {
-	m := model{dir: dir, config: config.Load()}
-	m.entries, m.err = os.ReadDir(dir)
+	ti := textinput.New()
+	ti.Placeholder = "type to filter…"
+	ti.CharLimit = 64
+	ti.Prompt = "/ "
+	ti.PromptStyle = filterTagStyle
+	ti.TextStyle = fileStyle
+
+	m := model{dir: dir, config: config.Load(), filterInput: ti}
+	all, err := os.ReadDir(dir)
+	m.allEntries = all
+	m.err = err
+	return m.withFilters()
+}
+
+// withFilters recomputes entries from allEntries applying the hidden and search filters.
+func (m model) withFilters() model {
+	q := strings.ToLower(m.filterInput.Value())
+	var filtered []os.DirEntry
+	for _, e := range m.allEntries {
+		if !m.showHidden && strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
+		if q != "" && !strings.Contains(strings.ToLower(e.Name()), q) {
+			continue
+		}
+		filtered = append(filtered, e)
+	}
+	m.entries = filtered
+	if m.cursor >= len(m.entries) {
+		if len(m.entries) == 0 {
+			m.cursor = 0
+		} else {
+			m.cursor = len(m.entries) - 1
+		}
+	}
 	return m
 }
 
@@ -78,6 +117,44 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		m.status = ""
+
+		if m.filtering {
+			switch msg.String() {
+			case "esc":
+				m.filtering = false
+				m.filterInput.Blur()
+				m.filterInput.SetValue("")
+				m = m.withFilters()
+			case "enter":
+				m.filtering = false
+				m.filterInput.Blur()
+			case "up", "k":
+				if m.cursor > 0 {
+					m.cursor--
+				}
+			case "down", "j":
+				if m.cursor < len(m.entries)-1 {
+					m.cursor++
+				}
+			default:
+				var tiCmd tea.Cmd
+				m.filterInput, tiCmd = m.filterInput.Update(msg)
+				m = m.withFilters()
+				if m.showPreview && len(m.entries) > 0 {
+					m.previewLoading = true
+					m.previewContent = ""
+					return m, tea.Batch(tiCmd, m.previewCmd())
+				}
+				return m, tiCmd
+			}
+			if m.showPreview && len(m.entries) > 0 {
+				m.previewLoading = true
+				m.previewContent = ""
+				return m, m.previewCmd()
+			}
+			return m, nil
+		}
+
 		var needPreview bool
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -98,11 +175,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "right", "l", "enter":
 			if len(m.entries) > 0 && m.entries[m.cursor].IsDir() {
 				next := filepath.Join(m.dir, m.entries[m.cursor].Name())
-				entries, err := os.ReadDir(next)
+				all, err := os.ReadDir(next)
 				if err == nil {
 					m.dir = next
-					m.entries = entries
+					m.allEntries = all
 					m.cursor = 0
+					m.filterInput.SetValue("")
+					m.filtering = false
+					m = m.withFilters()
 					needPreview = true
 				}
 			}
@@ -110,13 +190,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "left", "h", "backspace":
 			parent := filepath.Dir(m.dir)
 			if parent != m.dir {
-				entries, err := os.ReadDir(parent)
+				all, err := os.ReadDir(parent)
 				if err == nil {
 					oldName := filepath.Base(m.dir)
 					m.dir = parent
-					m.entries = entries
+					m.allEntries = all
+					m.filterInput.SetValue("")
+					m.filtering = false
+					m = m.withFilters()
 					m.cursor = 0
-					for i, e := range entries {
+					for i, e := range m.entries {
 						if e.Name() == oldName {
 							m.cursor = i
 							break
@@ -153,6 +236,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.previewCmd()
 			}
 			return m, nil
+
+		case "/":
+			m.filtering = true
+			m.filterInput.Focus()
+			return m, textinput.Blink
+
+		case "esc":
+			if m.filterInput.Value() != "" {
+				m.filterInput.SetValue("")
+				m = m.withFilters()
+				needPreview = true
+			}
+
+		case ".":
+			m.showHidden = !m.showHidden
+			m = m.withFilters()
+			needPreview = true
 		}
 
 		if m.showPreview && needPreview && len(m.entries) > 0 {
@@ -174,7 +274,6 @@ func (m model) leftWidth() int {
 	}
 	w := minWidth
 	for _, e := range m.entries {
-		// 2 for cursor prefix, +1 for trailing slash on dirs
 		nameW := 2 + len([]rune(e.Name()))
 		if e.IsDir() {
 			nameW++
@@ -183,7 +282,6 @@ func (m model) leftWidth() int {
 			w = nameW
 		}
 	}
-	// Always leave at least 30 chars for the preview panel.
 	if cap := m.width - 32; w > cap {
 		w = cap
 	}
@@ -197,7 +295,7 @@ func (m model) previewCmd() tea.Cmd {
 	entry := m.entries[m.cursor]
 	path := filepath.Join(m.dir, entry.Name())
 	lw := m.leftWidth()
-	rw := m.width - lw - 2 // 2 = border + padding
+	rw := m.width - lw - 2
 	if rw < 10 {
 		rw = 40
 	}
@@ -222,13 +320,16 @@ func (m model) View() string {
 func (m model) renderFileList() string {
 	lw := m.leftWidth()
 
-	// Build the scrollable content area first so we can measure its line count.
 	var top strings.Builder
 	top.WriteString(taglineStyle.Render("peek-a-boo, filesystem.") + "\n\n")
 	top.WriteString(pathStyle.Render(m.dir) + "\n\n")
 
 	if len(m.entries) == 0 {
-		top.WriteString(fileStyle.Render("  (empty)") + "\n")
+		label := "  (empty)"
+		if m.filterInput.Value() != "" {
+			label = "  no matches"
+		}
+		top.WriteString(fileStyle.Render(label) + "\n")
 	}
 	for i, e := range m.entries {
 		cursor := "  "
@@ -237,7 +338,7 @@ func (m model) renderFileList() string {
 		}
 		name := e.Name()
 		if m.showPreview {
-			maxLen := lw - 4 // cursor(2) + slash(1) + margin(1)
+			maxLen := lw - 4
 			runes := []rune(name)
 			if len(runes) > maxLen {
 				name = string(runes[:maxLen-1]) + "…"
@@ -256,27 +357,39 @@ func (m model) renderFileList() string {
 		top.WriteString(line + "\n")
 	}
 
+	dotLabel := ". show hidden"
+	if m.showHidden {
+		dotLabel = ". hide hidden"
+	}
 	var hint string
 	if m.showPreview {
-		hint = "↑/↓  enter  o open  p close  q quit"
+		hint = fmt.Sprintf("↑/↓  enter  o  /  %s  p close  q", dotLabel)
 	} else {
-		hint = "↑/↓ navigate  →/enter go in  o open  p preview  ←/h up  q quit"
+		hint = fmt.Sprintf("↑/↓  →/enter  o open  / filter  %s  p preview  ←/h  q", dotLabel)
 	}
 
 	var sb strings.Builder
 	sb.WriteString(top.String())
 
-	// Pad so the hint line sits at the very bottom of the panel.
-	// top already ends each line with \n, so strings.Count gives lines consumed.
-	// We need 1 more \n (blank gap) before the hint, so reserve 2 rows for that.
 	if m.height > 0 {
 		linesUsed := strings.Count(top.String(), "\n")
-		padding := m.height - linesUsed - 2
+		// Filter bar (when active or set) sits above the hint — takes one extra row.
+		bottomRows := 2
+		if m.filtering || m.filterInput.Value() != "" {
+			bottomRows = 3
+		}
+		padding := m.height - linesUsed - bottomRows
 		for i := 0; i < padding; i++ {
 			sb.WriteByte('\n')
 		}
 	}
 
+	if m.filtering {
+		sb.WriteString("\n" + m.filterInput.View())
+	} else if m.filterInput.Value() != "" {
+		sb.WriteString("\n" + filterTagStyle.Render("/"+m.filterInput.Value()) +
+			pathStyle.Render("  esc to clear"))
+	}
 	sb.WriteString("\n" + pathStyle.Render(hint))
 	if m.status != "" {
 		sb.WriteString("\n" + errorStyle.Render(m.status))
@@ -293,7 +406,6 @@ func (m model) renderPreview() string {
 	if len(m.entries) > 0 {
 		header = previewHdrStyle.Render(m.entries[m.cursor].Name()) + "\n\n"
 	}
-
 	var body string
 	switch {
 	case m.previewLoading:
@@ -303,7 +415,6 @@ func (m model) renderPreview() string {
 	default:
 		body = m.previewContent
 	}
-
 	return panelBorder.Render(header + body)
 }
 
@@ -328,9 +439,8 @@ func previewDir(path string, width, height int) string {
 		return pathStyle.Render("(empty directory)")
 	}
 	var sb strings.Builder
-	limit := height
 	for i, e := range entries {
-		if i >= limit {
+		if i >= height {
 			sb.WriteString(pathStyle.Render(fmt.Sprintf("  … %d more", len(entries)-i)) + "\n")
 			break
 		}
