@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -16,6 +17,14 @@ import (
 	"github.com/lovestaco/peektea/internal/config"
 )
 
+const (
+	sortName = iota
+	sortSize
+	sortMod
+)
+
+var sortLabels = [3]string{"name", "size", "modified"}
+
 var (
 	cursorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
 	dirStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
@@ -25,8 +34,10 @@ var (
 	errorStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 	taglineStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#7DAD5C")).Bold(true)
 	previewHdrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-	filterTagStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-	panelBorder     = lipgloss.NewStyle().
+	filterTagStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+	scrollTrackStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238"))
+	scrollThumbStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	panelBorder      = lipgloss.NewStyle().
 				BorderLeft(true).
 				BorderStyle(lipgloss.NormalBorder()).
 				BorderForeground(lipgloss.Color("241")).
@@ -52,6 +63,9 @@ type model struct {
 	showHidden     bool
 	filterInput    textinput.Model
 	filtering      bool
+	sortMode       int
+	previewScroll  int
+	listOffset     int
 }
 
 func newModel(dir string) model {
@@ -82,6 +96,26 @@ func (m model) withFilters() model {
 		}
 		filtered = append(filtered, e)
 	}
+	sort.SliceStable(filtered, func(i, j int) bool {
+		switch m.sortMode {
+		case sortSize:
+			ii, _ := filtered[i].Info()
+			jj, _ := filtered[j].Info()
+			if ii == nil || jj == nil {
+				return false
+			}
+			return ii.Size() > jj.Size()
+		case sortMod:
+			ii, _ := filtered[i].Info()
+			jj, _ := filtered[j].Info()
+			if ii == nil || jj == nil {
+				return false
+			}
+			return ii.ModTime().After(jj.ModTime())
+		default:
+			return strings.ToLower(filtered[i].Name()) < strings.ToLower(filtered[j].Name())
+		}
+	})
 	m.entries = filtered
 	if m.cursor >= len(m.entries) {
 		if len(m.entries) == 0 {
@@ -89,6 +123,35 @@ func (m model) withFilters() model {
 		} else {
 			m.cursor = len(m.entries) - 1
 		}
+	}
+	return m.clampListOffset()
+}
+
+func (m model) visibleFileCount() int {
+	if m.height == 0 {
+		return 20
+	}
+	bottomRows := 2
+	if m.filtering || m.filterInput.Value() != "" {
+		bottomRows = 3
+	}
+	v := m.height - 4 - bottomRows // 4 header rows (tagline+blank+path+blank)
+	if v < 1 {
+		v = 1
+	}
+	return v
+}
+
+func (m model) clampListOffset() model {
+	visible := m.visibleFileCount()
+	if m.cursor < m.listOffset {
+		m.listOffset = m.cursor
+	}
+	if m.cursor >= m.listOffset+visible {
+		m.listOffset = m.cursor - visible + 1
+	}
+	if m.listOffset < 0 {
+		m.listOffset = 0
 	}
 	return m
 }
@@ -107,6 +170,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case previewMsg:
 		m.previewContent = msg.content
 		m.previewLoading = false
+		m.previewScroll = 0
 		return m, nil
 
 	case openResultMsg:
@@ -131,10 +195,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "up", "k":
 				if m.cursor > 0 {
 					m.cursor--
+					m = m.clampListOffset()
 				}
 			case "down", "j":
 				if m.cursor < len(m.entries)-1 {
 					m.cursor++
+					m = m.clampListOffset()
 				}
 			default:
 				var tiCmd tea.Cmd
@@ -163,12 +229,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
+				m = m.clampListOffset()
 				needPreview = true
 			}
 
 		case "down", "j":
 			if m.cursor < len(m.entries)-1 {
 				m.cursor++
+				m = m.clampListOffset()
 				needPreview = true
 			}
 
@@ -205,6 +273,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							break
 						}
 					}
+					needPreview = true
+				}
+			}
+
+		case "H":
+			home, err := os.UserHomeDir()
+			if err == nil && m.dir != home {
+				all, err := os.ReadDir(home)
+				if err == nil {
+					m.dir = home
+					m.allEntries = all
+					m.cursor = 0
+					m.filterInput.SetValue("")
+					m.filtering = false
+					m = m.withFilters()
 					needPreview = true
 				}
 			}
@@ -253,6 +336,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.showHidden = !m.showHidden
 			m = m.withFilters()
 			needPreview = true
+
+		case "s":
+			m.sortMode = (m.sortMode + 1) % 3
+			m = m.withFilters()
+			needPreview = true
+
+		case "[":
+			if m.showPreview {
+				m.previewScroll -= m.height / 4
+				if m.previewScroll < 0 {
+					m.previewScroll = 0
+				}
+			}
+
+		case "]":
+			if m.showPreview {
+				m.previewScroll += m.height / 4
+			}
 		}
 
 		if m.showPreview && needPreview && len(m.entries) > 0 {
@@ -324,6 +425,15 @@ func (m model) renderFileList() string {
 	top.WriteString(taglineStyle.Render("peek-a-boo, filesystem.") + "\n\n")
 	top.WriteString(pathStyle.Render(m.dir) + "\n\n")
 
+	visibleCount := m.visibleFileCount()
+	showListBar := len(m.entries) > visibleCount
+
+	// line width for padding when scrollbar is present
+	lineWidth := lw
+	if !m.showPreview && m.width > 0 {
+		lineWidth = m.width
+	}
+
 	if len(m.entries) == 0 {
 		label := "  (empty)"
 		if m.filterInput.Value() != "" {
@@ -331,14 +441,28 @@ func (m model) renderFileList() string {
 		}
 		top.WriteString(fileStyle.Render(label) + "\n")
 	}
-	for i, e := range m.entries {
+
+	var barChars []string
+	if showListBar {
+		barChars = buildScrollbar(len(m.entries), visibleCount, m.listOffset)
+	}
+
+	end := m.listOffset + visibleCount
+	if end > len(m.entries) {
+		end = len(m.entries)
+	}
+	for i, e := range m.entries[m.listOffset:end] {
+		absIdx := m.listOffset + i
 		cursor := "  "
-		if i == m.cursor {
+		if absIdx == m.cursor {
 			cursor = cursorStyle.Render("▶ ")
 		}
 		name := e.Name()
-		if m.showPreview {
-			maxLen := lw - 4
+		maxLen := lineWidth - 4
+		if showListBar {
+			maxLen -= 2
+		}
+		if m.showPreview || showListBar {
 			runes := []rune(name)
 			if len(runes) > maxLen {
 				name = string(runes[:maxLen-1]) + "…"
@@ -351,21 +475,30 @@ func (m model) renderFileList() string {
 			nameStyled = fileStyle.Render(name)
 		}
 		line := cursor + nameStyled
-		if i == m.cursor {
+		if showListBar {
+			targetW := lineWidth - 2
+			if pad := targetW - lipgloss.Width(line); pad > 0 {
+				line += strings.Repeat(" ", pad)
+			}
+		}
+		if absIdx == m.cursor {
 			line = selectedBg.Render(line)
+		}
+		if showListBar && i < len(barChars) {
+			line += " " + barChars[i]
 		}
 		top.WriteString(line + "\n")
 	}
 
-	dotLabel := ". show hidden"
+	dotLabel := "show hidden"
 	if m.showHidden {
-		dotLabel = ". hide hidden"
+		dotLabel = "hide hidden"
 	}
 	var hint string
 	if m.showPreview {
-		hint = fmt.Sprintf("↑/↓  enter  o  /  %s  p close  q", dotLabel)
+		hint = fmt.Sprintf("enter:go in  o:open  /:filter  .:%-11s  [/]:scroll  p:close  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
 	} else {
-		hint = fmt.Sprintf("↑/↓  →/enter  o open  / filter  %s  p preview  ←/h  q", dotLabel)
+		hint = fmt.Sprintf("enter:go in  o:open  /:filter  .:%-11s  p:preview  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
 	}
 
 	var sb strings.Builder
@@ -413,9 +546,75 @@ func (m model) renderPreview() string {
 	case m.previewContent == "":
 		body = pathStyle.Render("(no preview)")
 	default:
-		body = m.previewContent
+		ph := m.height - 6
+		if ph < 5 {
+			ph = 10
+		}
+		lines := strings.Split(m.previewContent, "\n")
+		scroll := m.previewScroll
+		if maxScroll := len(lines) - ph; scroll > maxScroll {
+			scroll = maxScroll
+		}
+		if scroll < 0 {
+			scroll = 0
+		}
+		visible := lines[scroll:]
+		if len(visible) > ph {
+			visible = visible[:ph]
+		}
+		// content width = total - border(1) - padding(1) - space(1) - scrollbar(1)
+		rw := m.width - m.leftWidth() - 4
+		if rw < 10 {
+			rw = 30
+		}
+		barChars := buildScrollbar(len(lines), ph, scroll)
+		var bodySb strings.Builder
+		for i, line := range visible {
+			pad := rw - lipgloss.Width(line)
+			if pad > 0 {
+				line = line + strings.Repeat(" ", pad)
+			}
+			barChar := " "
+			if i < len(barChars) {
+				barChar = barChars[i]
+			}
+			bodySb.WriteString(line + " " + barChar + "\n")
+		}
+		body = bodySb.String()
+	}
+	if m.height > 0 {
+		return panelBorder.Height(m.height).Render(header + body)
 	}
 	return panelBorder.Render(header + body)
+}
+
+func buildScrollbar(total, visible, scroll int) []string {
+	chars := make([]string, visible)
+	track := scrollTrackStyle.Render("│")
+	thumb := scrollThumbStyle.Render("┃")
+	if total <= visible {
+		for i := range chars {
+			chars[i] = track
+		}
+		return chars
+	}
+	thumbSize := visible * visible / total
+	if thumbSize < 1 {
+		thumbSize = 1
+	}
+	maxScroll := total - visible
+	if maxScroll < 1 {
+		maxScroll = 1
+	}
+	thumbPos := scroll * (visible - thumbSize) / maxScroll
+	for i := range chars {
+		if i >= thumbPos && i < thumbPos+thumbSize {
+			chars[i] = thumb
+		} else {
+			chars[i] = track
+		}
+	}
+	return chars
 }
 
 func loadPreview(path string, entry os.DirEntry, width, height int) tea.Cmd {
@@ -440,7 +639,7 @@ func previewDir(path string, width, height int) string {
 	}
 	var sb strings.Builder
 	for i, e := range entries {
-		if i >= height {
+		if i >= 1000 {
 			sb.WriteString(pathStyle.Render(fmt.Sprintf("  … %d more", len(entries)-i)) + "\n")
 			break
 		}
@@ -467,9 +666,22 @@ func previewImage(path string, width, height int) string {
 	return strings.TrimRight(string(out), "\n")
 }
 
-func previewText(path string, width, height int) string {
+func previewText(path string, width, _ int) string {
 	if isBinary(path) {
 		return pathStyle.Render("[binary file]")
+	}
+	const maxLines = 500
+	if _, err := exec.LookPath("bat"); err == nil {
+		out, err := exec.Command("bat",
+			"--color=always",
+			"--style=plain",
+			"--line-range", fmt.Sprintf(":%d", maxLines),
+			"--terminal-width", fmt.Sprintf("%d", width),
+			path,
+		).Output()
+		if err == nil {
+			return strings.TrimRight(string(out), "\n")
+		}
 	}
 	f, err := os.Open(path)
 	if err != nil {
@@ -483,7 +695,7 @@ func previewText(path string, width, height int) string {
 	if maxW < 1 {
 		maxW = 40
 	}
-	for scanner.Scan() && len(lines) < height {
+	for scanner.Scan() && len(lines) < maxLines {
 		line := scanner.Text()
 		line = strings.ReplaceAll(line, "\t", "    ")
 		runes := []rune(line)

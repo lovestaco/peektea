@@ -41,9 +41,11 @@ Starts in the current working directory.
 | `←` / `h` / `backspace` | go to parent |
 | `o` | open with configured program |
 | `p` | toggle preview panel |
+| `[` / `]` | scroll preview up / down |
 | `/` | filter entries as you type |
 | `esc` | exit filter / clear active filter |
 | `.` | toggle hidden files (dotfiles) |
+| `s` | cycle sort: name → size → modified |
 | `q` / `ctrl+c` | quit |
 
 ## Filter
@@ -60,12 +62,18 @@ Press `.` to toggle hidden files (dotfiles) on and off. The hint bar always show
 
 Press `p` to open a side-by-side preview panel. Press `p` again to close it.
 
-- **Text files** — first N lines rendered inline, truncated to panel width
+- **Text files** — rendered with syntax highlighting via [bat](https://github.com/sharkdp/bat) if installed, plain text otherwise
 - **Images** — rendered directly in the terminal via [chafa](https://hpjansson.org/chafa/)
 - **Directories** — lists the contents of the folder
 - **Binary files** — shows a `[binary file]` notice
 
+Use `[` and `]` to scroll through the preview. Long files load up to 500 lines so you can page through them without leaving the browser.
+
 The left panel auto-widens to fit the longest filename in the current directory. `peektea init` will tell you if chafa is installed and how to get it if not.
+
+## Sort
+
+Press `s` to cycle the sort mode: **name** → **size** (largest first) → **modified** (newest first) → back to name. The current sort is always shown in the hint bar.
 
 ## Setup
 
