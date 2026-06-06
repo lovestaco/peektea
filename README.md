@@ -13,6 +13,12 @@ A quick peek before you steep:
 
 ## Install
 
+**One-liner:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lovestaco/peektea/master/scripts/install.sh | sh
+```
+
 **Download a binary** (no Go required) — grab the latest release for your platform from the [releases page](https://github.com/lovestaco/peektea/releases/latest):
 
 | Platform | File |
