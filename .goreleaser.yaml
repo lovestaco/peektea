@@ -26,10 +26,7 @@ archives:
 checksum:
   name_template: checksums.txt
 
+# Release notes are supplied via --release-notes flag from scripts/release_gh.py.
+# goreleaser's own changelog is disabled.
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^chore:"
+  disable: true
