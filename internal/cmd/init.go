@@ -10,6 +10,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/lovestaco/peektea/internal/config"
 )
 
 var (
@@ -69,13 +71,14 @@ func RunInit() {
 	home, _ := os.UserHomeDir()
 	dest := filepath.Join(home, ".peektea.toml")
 
+	writeConfig := true
 	if _, err := os.Stat(dest); err == nil {
 		fmt.Printf("%s already exists. Overwrite? [y/N]: ", dest)
 		var ans string
 		fmt.Scanln(&ans)
 		if strings.ToLower(strings.TrimSpace(ans)) != "y" {
-			fmt.Println("aborted.")
-			os.Exit(0)
+			fmt.Println("keeping existing config.")
+			writeConfig = false
 		}
 	}
 
@@ -83,10 +86,28 @@ func RunInit() {
 
 	fmt.Println("peektea init")
 	fmt.Println()
-	fmt.Println("I peeked into your installed software — here's what I found. Pick one.")
-	fmt.Println()
+	if writeConfig {
+		fmt.Println("I peeked into your installed software — here's what I found. Pick one.")
+		fmt.Println()
+	}
+
+	// On WSL there are usually no Linux GUI apps — let Windows handle
+	// directories, images, and documents via wslview/explorer.exe.
+	wslOpener := ""
+	if config.IsWSL() {
+		wslOpener = config.WSLOpener()
+		if wslOpener != "" && writeConfig {
+			fmt.Printf("WSL detected — using %s to open files with Windows apps.\n\n", wslOpener)
+		}
+	}
 
 	for _, cat := range setupCategories {
+		if !writeConfig {
+			break
+		}
+		if wslOpener != "" && cat.fallback == "xdg-open" {
+			cat.fallback = wslOpener
+		}
 		found := installedFrom(cat.programs)
 		fmt.Printf("── %s\n", cat.label)
 
@@ -115,22 +136,75 @@ func RunInit() {
 		}
 	}
 
-	if err := writeToml(dest, selections); err != nil {
-		fmt.Fprintf(os.Stderr, "error writing config: %v\n", err)
-		os.Exit(1)
+	if writeConfig {
+		if err := writeToml(dest, selections); err != nil {
+			fmt.Fprintf(os.Stderr, "error writing config: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("created %s\n", dest)
 	}
-	fmt.Printf("created %s\n", dest)
 
 	fmt.Println()
 	fmt.Println("── Image previews")
 	if _, err := exec.LookPath("chafa"); err != nil {
-		fmt.Println("   chafa not found — install it for inline image previews.")
-		fmt.Println("   Ubuntu/Debian : sudo apt install chafa")
-		fmt.Println("   Arch          : sudo pacman -S chafa")
-		fmt.Println("   macOS         : brew install chafa")
+		offerInstall("chafa", "it renders images right in the terminal (the `p` preview)")
 	} else {
 		fmt.Println("   chafa found — image previews are ready.")
 	}
+}
+
+// offerInstall detects the system package manager and offers to install pkg
+// on the spot instead of printing per-distro instructions.
+func offerInstall(pkg, why string) {
+	fmt.Printf("   %s not found — %s.\n", pkg, why)
+	args := pkgInstallCmd(pkg)
+	if args == nil {
+		fmt.Printf("   no package manager detected — install %s manually to enable this.\n", pkg)
+		return
+	}
+	cmdLine := strings.Join(args, " ")
+	fmt.Printf("   Install it now? (%s) [Y/n]: ", cmdLine)
+	var ans string
+	fmt.Scanln(&ans)
+	switch strings.ToLower(strings.TrimSpace(ans)) {
+	case "", "y", "yes":
+	default:
+		fmt.Printf("   skipped — run '%s' later if you change your mind.\n", cmdLine)
+		return
+	}
+	c := exec.Command(args[0], args[1:]...)
+	c.Stdin = os.Stdin
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	if err := c.Run(); err != nil {
+		fmt.Printf("   install failed (%v) — run '%s' manually.\n", err, cmdLine)
+		return
+	}
+	if _, err := exec.LookPath(pkg); err == nil {
+		fmt.Printf("   %s installed — image previews are ready.\n", pkg)
+	}
+}
+
+// pkgInstallCmd returns the install command for the first package manager
+// found on this system, or nil if none is detected.
+func pkgInstallCmd(pkg string) []string {
+	managers := []struct {
+		bin  string
+		args []string
+	}{
+		{"apt", []string{"sudo", "apt", "install", "-y", pkg}},
+		{"dnf", []string{"sudo", "dnf", "install", "-y", pkg}},
+		{"pacman", []string{"sudo", "pacman", "-S", "--noconfirm", pkg}},
+		{"zypper", []string{"sudo", "zypper", "install", "-y", pkg}},
+		{"apk", []string{"sudo", "apk", "add", pkg}},
+		{"brew", []string{"brew", "install", pkg}},
+	}
+	for _, m := range managers {
+		if _, err := exec.LookPath(m.bin); err == nil {
+			return m.args
+		}
+	}
+	return nil
 }
 
 type pickerModel struct {

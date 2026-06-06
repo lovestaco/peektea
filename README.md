@@ -18,10 +18,14 @@ Brew it from source:
 ```bash
 git clone https://github.com/lovestaco/peektea
 cd peektea
-make install   # puts peektea in ~/go/bin
+make install
 ```
 
-Make sure `~/go/bin` is on your `$PATH`.
+`make install` puts the binary in `~/go/bin` and figures out `$PATH` for you:
+
+1. Already reachable — done, nothing to do.
+2. `~/.local/bin` is on your PATH — symlinks the binary there, works immediately in the current shell.
+3. Neither — appends `~/go/bin` to your `.bashrc`/`.zshrc` and tells you which file to `source`.
 
 ## Usage
 
@@ -39,6 +43,7 @@ Starts in the current working directory.
 | `↓` / `j` | move down |
 | `→` / `l` / `enter` | go inside directory |
 | `←` / `h` / `backspace` | go to parent |
+| `H` | go to home directory |
 | `o` | open with configured program |
 | `p` | toggle preview panel |
 | `[` / `]` | scroll preview up / down |
@@ -75,11 +80,19 @@ The left panel auto-widens to fit the longest filename in the current directory.
 
 Press `s` to cycle the sort mode: **name** → **size** (largest first) → **modified** (newest first) → back to name. The current sort is always shown in the hint bar.
 
+## WSL
+
+Works on Windows Subsystem for Linux. peektea detects WSL automatically and routes file opens through `wslview` (from [wslu](https://wslutiliti.es/wslu/)) if available, otherwise `explorer.exe`. Linux paths are converted to Windows paths via `wslpath` so Windows apps can read them.
+
+`peektea init` on WSL skips the Linux GUI app categories and sets the Windows opener as the fallback instead.
+
 ## Setup
 
-Run `peektea init` to configure which apps open each file type. 
+Run `peektea init` to configure which apps open each file type.
 
-It peeks into your installed software and lets you pick your blend.
+It peeks into your installed software and lets you pick your blend. If there's only one option for a category it selects it automatically. If chafa isn't installed for image previews, init offers to install it on the spot using your system package manager — no copy-pasting commands needed.
+
+Declining the "already exists, overwrite?" prompt keeps your existing config and continues to the chafa check, so you can re-run `peektea init` just to install extras without touching your config.
 
 ![peektea init](media/peek_tea_init.gif)
 

@@ -297,6 +297,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				entry := m.entries[m.cursor]
 				prog := m.config.ProgramFor(entry)
 				path := filepath.Join(m.dir, entry.Name())
+				if strings.HasSuffix(prog, ".exe") {
+					// Windows programs (WSL interop) can't read /home/... paths.
+					path = config.WindowsPath(path)
+				}
 				if m.config.IsTerminalApp(prog) {
 					c := exec.Command(prog, path)
 					return m, tea.ExecProcess(c, func(err error) tea.Msg {
