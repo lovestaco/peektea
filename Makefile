@@ -1,13 +1,15 @@
-BINARY := peektea
+BINARY      := peektea
 INSTALL_DIR := $(shell go env GOPATH)/bin
+VERSION     := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+LDFLAGS     := -s -w -X main.version=$(VERSION)
 
-.PHONY: build install start rm
+.PHONY: build install start rm release snapshot
 
 build:
-	go build -o $(BINARY) .
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) .
 
 install:
-	go build -o $(INSTALL_DIR)/$(BINARY) .
+	go build -ldflags "$(LDFLAGS)" -o $(INSTALL_DIR)/$(BINARY) .
 	@if command -v $(BINARY) >/dev/null 2>&1; then \
 		echo "$(BINARY) installed — try '$(BINARY) -h'"; \
 	elif echo ":$$PATH:" | grep -q ":$$HOME/.local/bin:"; then \
@@ -25,6 +27,12 @@ install:
 
 start:
 	air
+
+release:
+	goreleaser release --clean
+
+snapshot:
+	goreleaser release --snapshot --clean
 
 rm:
 	rm -f ~/.peektea.toml && echo "Removed ~/.peektea.toml"

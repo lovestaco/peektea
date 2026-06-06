@@ -9,6 +9,7 @@ func RunHelp() {
 	fmt.Println("  peektea              start the file browser")
 	fmt.Println("  peektea init         interactive setup of ~/.peektea.toml")
 	fmt.Println("  peektea uninstall    remove peektea and optionally its config")
+	fmt.Println("  peektea version      show version")
 	fmt.Println("  peektea -h           show this help")
 	fmt.Println()
 	fmt.Println("Keys:")

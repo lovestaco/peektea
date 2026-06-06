@@ -17,6 +17,8 @@ import (
 	"github.com/lovestaco/peektea/internal/config"
 )
 
+var version = "dev"
+
 const (
 	sortName = iota
 	sortSize
@@ -748,6 +750,8 @@ func main() {
 			cmd.RunUninstall()
 		case "-h", "--help", "help":
 			cmd.RunHelp()
+		case "version", "--version", "-v":
+			cmd.RunVersion(version)
 		default:
 			fmt.Fprintf(os.Stderr, "unknown command: %s\n\nrun 'peektea -h' for help\n", os.Args[1])
 			os.Exit(1)

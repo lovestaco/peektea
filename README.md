@@ -12,8 +12,25 @@ A quick peek before you steep:
 ![demo](media/demo.gif)
 
 ## Install
- 
-Brew it from source:
+
+**Download a binary** (no Go required) — grab the latest release for your platform from the [releases page](https://github.com/lovestaco/peektea/releases/latest):
+
+| Platform | File |
+|----------|------|
+| Linux x86-64 | `peektea_*_linux_amd64.tar.gz` |
+| Linux arm64 | `peektea_*_linux_arm64.tar.gz` |
+| macOS x86-64 | `peektea_*_darwin_amd64.tar.gz` |
+| macOS Apple Silicon | `peektea_*_darwin_arm64.tar.gz` |
+
+Extract and put the `peektea` binary anywhere on your `$PATH`.
+
+**Install with Go:**
+
+```bash
+go install github.com/lovestaco/peektea@latest
+```
+
+**Build from source:**
 
 ```bash
 git clone https://github.com/lovestaco/peektea
@@ -151,12 +168,15 @@ No silent nuke — no tea spilled without warning.
 ## Development
 
 ```bash
-make build   # build ./peektea
-make start   # live reload via air (rebuilds on every .go save)
-make install # install to ~/go/bin
+make build      # build ./peektea
+make install    # build and install to ~/go/bin
+make start      # live reload via air (rebuilds on every .go save)
+make snapshot   # build release archives locally without publishing
+make release    # tag + publish a GitHub release via goreleaser
 ```
 
 Requires [air](https://github.com/air-verse/air) for `make start` (`go install github.com/air-verse/air@latest`).
+Requires [goreleaser](https://goreleaser.com) for `make release` / `make snapshot` (`go install github.com/goreleaser/goreleaser/v2@latest`).
 
 ## Stack
 
