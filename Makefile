@@ -68,6 +68,7 @@ release:
 	@if [ -z "$(VERSION)" ]; then echo "usage: make release VERSION=v0.x.x"; exit 1; fi
 	python3 scripts/release_gh.py $(VERSION) --render > /tmp/peektea_release_notes.md
 	goreleaser release --clean --release-notes /tmp/peektea_release_notes.md
+	gh release edit $(VERSION) --notes-file /tmp/peektea_release_notes.md
 
 rm:
 	rm -f ~/.peektea.toml && echo "Removed ~/.peektea.toml"
