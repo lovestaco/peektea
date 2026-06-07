@@ -1,0 +1,4 @@
+blog*.md
+__pycache__/
+dist/
+.claude/

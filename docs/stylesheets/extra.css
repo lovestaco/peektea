@@ -1,0 +1,29 @@
+/* peektea brand palette — see media/colors.md */
+:root {
+  --md-primary-fg-color: #647E39;
+  --md-primary-fg-color--light: #9AB65A;
+  --md-primary-fg-color--dark: #48612F;
+  --md-accent-fg-color: #C78B4F;
+  --md-accent-fg-color--transparent: #C78B4F1a;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #03070D;
+  --md-primary-fg-color: #9AB65A;
+  --md-accent-fg-color: #E4A862;
+
+  /* text/icon color drawn on top of the (light green) primary color —
+     the header and search bar use this, so it needs to be dark for contrast */
+  --md-primary-bg-color: #03070D;
+  --md-primary-bg-color--light: #03070Db3;
+}
+
+[data-md-color-scheme="slate"] .md-typeset a {
+  color: #F8DAA4;
+}
+
+/* round the logo in the top-left header/nav */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  border-radius: 50%;
+}

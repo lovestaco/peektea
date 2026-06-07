@@ -3,7 +3,7 @@ INSTALL_DIR := $(shell go env GOPATH)/bin
 VERSION     := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS     := -s -w -X main.version=$(VERSION)
 
-.PHONY: build install start rm bump release-notes-init release snapshot
+.PHONY: build install start rm bump release-notes-init release snapshot docs docs-install
 
 build:
 	go build -ldflags "$(LDFLAGS)" -o $(BINARY) .
@@ -72,3 +72,11 @@ release:
 
 rm:
 	rm -f ~/.peektea.toml && echo "Removed ~/.peektea.toml"
+
+# Install the Python deps needed to build/preview the docs site.
+docs-install:
+	pip install mkdocs==1.6.1 mkdocs-material==9.7.6
+
+# Run the docs site locally with live reload (http://localhost:8000).
+docs:
+	mkdocs serve
