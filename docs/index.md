@@ -33,7 +33,7 @@ Peek through your filesystem with arrow keys (or vim keys), then pour each file 
 
     One-liner script, prebuilt binaries, `go install`, or build from source.
 
-    [:octicons-arrow-right-24: Installation](installation.md)
+    [:octicons-arrow-right-24: Installation](installation/index.md)
 
 -   :material-keyboard:{ .lg .middle } **Learn the keys**
 
@@ -49,7 +49,7 @@ Peek through your filesystem with arrow keys (or vim keys), then pour each file 
 
     Run `peektea init` and tell peektea which app opens which file type.
 
-    [:octicons-arrow-right-24: Configuration](configuration.md)
+    [:octicons-arrow-right-24: Configuration](installation/configuration.md)
 
 -   :material-microsoft-windows:{ .lg .middle } **Using WSL?**
 

@@ -1,4 +1,4 @@
-# Configuration
+# Configuration for Linux/macOS
 
 ## Setup with `peektea init`
 
@@ -12,10 +12,10 @@ It peeks into your installed software and lets you pick your blend. If there's o
 
 Declining the "already exists, overwrite?" prompt keeps your existing config and continues to the chafa check, so you can re-run `peektea init` just to install extras without touching your config.
 
-![peektea init](media/peek_tea_init.gif)
+![peektea init](../media/peek_tea_init.gif)
 
 !!! info "On WSL"
-    `peektea init` skips the Linux GUI app categories and sets the Windows opener as the fallback instead. See [WSL support](wsl.md).
+    `peektea init` skips the Linux GUI app categories and sets the Windows opener as the fallback instead. See [WSL support](../wsl.md).
 
 ## The config file
 
@@ -59,4 +59,4 @@ peektea -h
 
 Consider it the menu before you order:
 
-![peektea -h](media/help.png)
+![peektea -h](../media/help.png)

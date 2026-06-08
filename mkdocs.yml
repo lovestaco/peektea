@@ -13,6 +13,7 @@ hooks:
 
 theme:
   name: material
+  custom_dir: docs/overrides
   favicon: media/favicon.svg
   logo: media/icon-96x96.png
   palette:
@@ -67,16 +68,19 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Installation:
+      - installation/index.md
+      - Configuration: installation/configuration.md
+      - Uninstall: installation/uninstall.md
   - Usage:
       - usage/index.md
       - Navigation & keys: usage/keys.md
+      - Opening files: usage/opening-files.md
       - Filtering: usage/filtering.md
+      - Hidden files: usage/hidden-files.md
       - Preview panel: usage/preview.md
       - Sorting: usage/sorting.md
-  - Configuration: configuration.md
   - WSL support: wsl.md
-  - Uninstall: uninstall.md
   - Development: development.md
   - Releases:
       - releases/v0.2.1.md
@@ -84,7 +88,4 @@ nav:
       - releases/v0.1.0.md
 
 extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/lovestaco/peektea
   generator: false

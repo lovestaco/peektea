@@ -9,9 +9,3 @@ Press `/` to enter filter mode. Type anything and the list narrows to matching e
 | `enter`   | confirm and exit filter mode (filter stays active) |
 | `esc`     | clear the filter entirely               |
 | `↑` / `↓` | still navigate the list while you type  |
-
-## Hidden files
-
-Press `.` to toggle hidden files (dotfiles) on and off. The hint bar always shows the current state — `. show hidden` or `. hide hidden`.
-
-Both filters compose: you can search by name with dotfiles visible *or* hidden at the same time.

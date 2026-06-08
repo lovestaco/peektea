@@ -194,7 +194,7 @@ Requires [goreleaser](https://goreleaser.com) for `make release` / `make snapsho
 
 ## since you peeked this far — check out what I'm really brewing
 
-I'm Maneshwar, and alongside peektea I'm building [git-lrc](https://github.com/HexmosTech/git-lrc) — a micro AI code reviewer that runs on every commit.
+I'm Maneshwar, and alongside peektea I'm building [git-lrc](https://github.com/HexmosTech/git-lrc?utm_source=peektea) — a micro AI code reviewer that runs on every commit.
 
 It hooks into `git commit`, reviews every diff before it lands, and catches the bugs AI agents introduce silently. 60-second setup.
 
@@ -208,4 +208,4 @@ git-lrc fixes this.
 
 Any feedback or contributors are welcome.
 
-⭐ [Star git-lrc on GitHub](https://github.com/HexmosTech/git-lrc) to help other devs discover it.
+⭐ [Star git-lrc on GitHub](https://github.com/HexmosTech/git-lrc?utm_source=peektea) to help other devs discover it.

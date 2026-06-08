@@ -14,9 +14,17 @@ That's it — no flags needed for the basics. From here, everything is keyboard-
 
     Move around the filesystem, open files, and quit — all the core bindings in one table.
 
+-   [:material-file-eye: **Opening files**](opening-files.md)
+
+    Press `o` to launch the program configured for an entry's extension — terminal apps take over, GUI apps run in the background.
+
 -   [:material-magnify: **Filtering**](filtering.md)
 
-    Press `/` and narrow the list as you type, with hidden files toggled on or off.
+    Press `/` and narrow the list as you type, matching entries in real time.
+
+-   [:material-eye-off: **Hidden files**](hidden-files.md)
+
+    Press `.` to toggle dotfiles on and off — composes with filtering so you can search either way.
 
 -   [:material-eye: **Preview panel**](preview.md)
 

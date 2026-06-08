@@ -22,8 +22,111 @@
   color: #F8DAA4;
 }
 
+/* footer meta panel (copyright + promo boxes) matches the navbar's primary green */
+.md-footer-meta {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+}
+
+/* the .md-typeset a color rule (incl. our dark-mode override below) outranks
+   .peektea-promo__box's `color: inherit` — force footer links back to the
+   footer-meta text color so they stay readable on the green background */
+html .md-footer-meta.md-typeset a {
+  color: inherit;
+}
+
+/* Material's hover/focus rule lightens footer links — go fully black instead,
+   since the green footer background is too light for a lighter hover color */
+html .md-footer-meta.md-typeset a:hover,
+html .md-footer-meta.md-typeset a:focus {
+  color: #000;
+}
+
 /* round the logo in the top-left header/nav */
 .md-header__button.md-logo img,
 .md-header__button.md-logo svg {
   border-radius: 50%;
+}
+
+/* footer promo */
+.peektea-promo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* keep the copyright/promo/social groups vertically centered on one row,
+   with the git-lrc promo pinned left and the social box pinned right */
+.md-footer-meta__inner {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.peektea-promo__box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  opacity: 0.7;
+  padding: 0.3rem 0.7rem;
+  border-radius: 1.4rem;
+  border: 1px solid currentcolor;
+  transition: opacity 125ms, background-color 125ms, transform 125ms;
+}
+
+.peektea-promo__box:hover {
+  opacity: 1;
+  background-color: var(--md-accent-fg-color--transparent);
+  transform: translateY(-1px);
+}
+
+.peektea-promo__box img,
+.peektea-promo__box svg {
+  display: block;
+  height: 1.2rem !important;
+  width: auto !important;
+}
+
+.peektea-promo__box img {
+  border-radius: 4px;
+}
+
+.peektea-promo__box svg {
+  fill: currentcolor;
+}
+
+/* footer social box: peektea icon + GitHub icon, single clickable link */
+.md-social__link.peektea-social-box {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  width: auto !important;
+  height: auto !important;
+  padding: 0.3rem 0.7rem;
+  border-radius: 1.4rem;
+  border: 1px solid currentcolor;
+  opacity: 0.7;
+  transition: opacity 125ms, background-color 125ms, transform 125ms;
+}
+
+.md-social__link.peektea-social-box:hover {
+  opacity: 1;
+  background-color: var(--md-accent-fg-color--transparent);
+  transform: translateY(-1px);
+}
+
+.peektea-social-box__icon {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+}
+
+.md-social__link.peektea-social-box svg {
+  width: 1.2rem !important;
+  height: 1.2rem !important;
+  max-height: 1.2rem !important;
+  fill: currentcolor;
+  vertical-align: middle;
 }

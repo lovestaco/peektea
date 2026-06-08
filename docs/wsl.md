@@ -13,4 +13,4 @@ Linux paths are converted to Windows paths via `wslpath` so Windows apps can rea
 
 ## Setup on WSL
 
-`peektea init` on WSL skips the Linux GUI app categories — there's no point offering `nautilus` or `feh` when you're routing through Windows — and sets the Windows opener as the fallback instead. See [Configuration](configuration.md) for the full setup walkthrough.
+`peektea init` on WSL skips the Linux GUI app categories — there's no point offering `nautilus` or `feh` when you're routing through Windows — and sets the Windows opener as the fallback instead. See [Configuration](installation/configuration.md) for the full setup walkthrough.
