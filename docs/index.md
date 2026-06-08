@@ -5,7 +5,7 @@ description: A minimal terminal file browser built with Bubble Tea
 
 # peektea
 
-![cover](media/cover.png)
+ 
 
 A minimal terminal file browser built with [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
@@ -13,7 +13,9 @@ Peek through your filesystem with arrow keys (or vim keys), then pour each file 
 
 ## A quick peek before you steep
 
-![demo](media/demo.gif)
+<div class="video-wrapper">
+  <iframe src="https://www.youtube.com/embed/yDNN5x9Y9Ok" title="peektea demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+</div>
 
 ## Why peektea
 

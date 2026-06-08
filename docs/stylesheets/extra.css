@@ -42,6 +42,22 @@ html .md-footer-meta.md-typeset a:focus {
   color: #000;
 }
 
+/* responsive 16:9 wrapper for embedded videos (e.g. the homepage demo) */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  margin: 1rem 0;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.4rem;
+}
+
 /* round the logo in the top-left header/nav */
 .md-header__button.md-logo img,
 .md-header__button.md-logo svg {
