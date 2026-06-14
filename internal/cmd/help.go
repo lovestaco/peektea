@@ -3,7 +3,7 @@ package cmd
 import "fmt"
 
 func RunHelp() {
-	fmt.Println("peektea — a terminal file browser")
+	fmt.Println("peektea — Peek First. Open Later. A TUI file browser built with bubble tea")
 	fmt.Println()
 	fmt.Println("Usage:")
 	fmt.Println("  peektea              start the file browser")

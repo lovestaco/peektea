@@ -28,17 +28,17 @@ const (
 var sortLabels = [3]string{"name", "size", "modified"}
 
 var (
-	cursorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+	cursorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#9AB65A")).Bold(true)
 	dirStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
 	fileStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
 	pathStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
 	selectedBg      = lipgloss.NewStyle().Background(lipgloss.Color("236"))
 	errorStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 	taglineStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#7DAD5C")).Bold(true)
-	previewHdrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-	filterTagStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+	previewHdrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9AB65A")).Bold(true)
+	filterTagStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#9AB65A")).Bold(true)
 	scrollTrackStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("238"))
-	scrollThumbStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	scrollThumbStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9AB65A"))
 	panelBorder      = lipgloss.NewStyle().
 				BorderLeft(true).
 				BorderStyle(lipgloss.NormalBorder()).
