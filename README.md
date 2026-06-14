@@ -8,7 +8,9 @@ Peek through your filesystem with arrow keys (or vim keys), then pour each file 
 ## Demo
 
 A quick peek before you steep:
-
+Click below to watch the demo on YouTube (7m), or scroll down to see gif (10s)
+[![peektea demo](media/demo_thumb.png)](https://www.youtube.com/watch?v=yDNN5x9Y9Ok)
+demo in gif version
 ![demo](media/demo.gif)
 
 ## Install
