@@ -1,6 +1,5 @@
 
-![cover](media/cover.png)
-
+ 
 A minimal terminal file browser built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). 
 
 Peek through your filesystem with arrow keys (or vim keys), then pour each file straight into the app you've configured for it.
