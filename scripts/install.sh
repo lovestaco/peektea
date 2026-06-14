@@ -20,7 +20,7 @@ case "$ARCH" in
     *)             echo "error: unsupported arch: $ARCH"; exit 1 ;;
 esac
 
-# resolve latest version
+# resolve latest version (e.g. v0.2.1)
 VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
     | grep '"tag_name"' | head -1 | cut -d'"' -f4)
 
@@ -29,7 +29,10 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
-FILENAME="${BINARY}_${VERSION}_${OS}_${ARCH}.tar.gz"
+# GoReleaser strips the leading "v" from artifact names: tag v0.2.1 -> 0.2.1
+VERSION_NUM=${VERSION#v}
+
+FILENAME="${BINARY}_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
 URL="https://github.com/$REPO/releases/download/$VERSION/$FILENAME"
 
 echo "installing peektea $VERSION ($OS/$ARCH)…"
