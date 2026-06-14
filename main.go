@@ -752,6 +752,8 @@ func main() {
 			cmd.RunHelp()
 		case "version", "--version", "-v":
 			cmd.RunVersion(version)
+		case "--issue", "-i":
+			cmd.RunIssue()
 		default:
 			fmt.Fprintf(os.Stderr, "unknown command: %s\n\nrun 'peektea -h' for help\n", os.Args[1])
 			os.Exit(1)

@@ -10,6 +10,7 @@ func RunHelp() {
 	fmt.Println("  peektea init         interactive setup of ~/.peektea.toml")
 	fmt.Println("  peektea uninstall    remove peektea and optionally its config")
 	fmt.Println("  peektea version      show version")
+	fmt.Println("  peektea -i, --issue  open the GitHub issues page")
 	fmt.Println("  peektea -h           show this help")
 	fmt.Println()
 	fmt.Println("Keys:")
