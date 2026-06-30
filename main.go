@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -56,6 +57,7 @@ type model struct {
 	cursor         int
 	err            error
 	status         string
+	statusErr      bool
 	config         config.Config
 	width          int
 	height         int
@@ -178,11 +180,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case openResultMsg:
 		if msg.err != nil {
 			m.status = fmt.Sprintf("open failed: %v", msg.err)
+			m.statusErr = true
 		}
 		return m, nil
 
 	case tea.KeyMsg:
 		m.status = ""
+		m.statusErr = false
 
 		if m.filtering {
 			switch msg.String() {
@@ -312,8 +316,47 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				c := exec.Command(prog, path)
 				if err := c.Start(); err != nil {
 					m.status = fmt.Sprintf("open failed: %v", err)
+					m.statusErr = true
 				} else {
 					go c.Wait() //nolint — reap child to avoid zombie
+				}
+			}
+
+		case "y":
+			if len(m.entries) > 0 {
+				path := filepath.Join(m.dir, m.entries[m.cursor].Name())
+				if err := clipboard.WriteAll(path); err != nil {
+					m.status = fmt.Sprintf("copy failed: %v", err)
+					m.statusErr = true
+				} else {
+					m.status = "copied path"
+				}
+			}
+
+		case "Y":
+			if len(m.entries) > 0 {
+				entry := m.entries[m.cursor]
+				if entry.IsDir() {
+					m.status = "Y only works on files"
+				} else {
+					path := filepath.Join(m.dir, entry.Name())
+					if isBinary(path) {
+						m.status = "Y: binary file, skipped"
+					} else {
+						data, err := os.ReadFile(path)
+						if err != nil {
+							m.status = fmt.Sprintf("copy failed: %v", err)
+							m.statusErr = true
+						} else {
+							lines := strings.Count(string(data), "\n")
+							if err := clipboard.WriteAll(string(data)); err != nil {
+								m.status = fmt.Sprintf("copy failed: %v", err)
+								m.statusErr = true
+							} else {
+								m.status = fmt.Sprintf("copied contents (%d lines)", lines)
+							}
+						}
+					}
 				}
 			}
 
@@ -502,9 +545,9 @@ func (m model) renderFileList() string {
 	}
 	var hint string
 	if m.showPreview {
-		hint = fmt.Sprintf("enter:go in  o:open  /:filter  .:%-11s  [/]:scroll  p:close  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
+		hint = fmt.Sprintf("enter:go in  o:open  y:path  Y:file  /:filter  .:%-11s  [/]:scroll  p:close  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
 	} else {
-		hint = fmt.Sprintf("enter:go in  o:open  /:filter  .:%-11s  p:preview  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
+		hint = fmt.Sprintf("enter:go in  o:open  y:path  Y:file  /:filter  .:%-11s  p:preview  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
 	}
 
 	var sb strings.Builder
@@ -531,7 +574,11 @@ func (m model) renderFileList() string {
 	}
 	sb.WriteString("\n" + pathStyle.Render(hint))
 	if m.status != "" {
-		sb.WriteString("\n" + errorStyle.Render(m.status))
+		if m.statusErr {
+			sb.WriteString("\n" + errorStyle.Render(m.status))
+		} else {
+			sb.WriteString("\n" + pathStyle.Render(m.status))
+		}
 	}
 
 	if m.showPreview {
@@ -752,6 +799,8 @@ func main() {
 			cmd.RunHelp()
 		case "version", "--version", "-v":
 			cmd.RunVersion(version)
+		case "--issue", "-i":
+			cmd.RunIssue()
 		default:
 			fmt.Fprintf(os.Stderr, "unknown command: %s\n\nrun 'peektea -h' for help\n", os.Args[1])
 			os.Exit(1)

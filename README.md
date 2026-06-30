@@ -69,6 +69,8 @@ Starts in the current working directory.
 | `←` / `h` / `backspace` | go to parent |
 | `H` | go to home directory |
 | `o` | open with configured program |
+| `y` | copy absolute path to clipboard |
+| `Y` | copy file contents to clipboard (files only) |
 | `p` | toggle preview panel |
 | `[` / `]` | scroll preview up / down |
 | `/` | filter entries as you type |
