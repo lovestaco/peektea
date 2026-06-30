@@ -19,6 +19,8 @@ func RunHelp() {
 	fmt.Println("  ←    h/backspace  go to parent")
 	fmt.Println("  H               go to home directory")
 	fmt.Println("  o               open with configured program")
+	fmt.Println("  y               copy absolute path to clipboard")
+	fmt.Println("  Y               copy file contents to clipboard")
 	fmt.Println("  p               toggle preview panel (text + images via chafa)")
 	fmt.Println("  [  ]            scroll preview up / down")
 	fmt.Println("  /               filter entries as you type")
