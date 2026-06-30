@@ -51,25 +51,28 @@ type openResultMsg struct{ err error }
 type previewMsg struct{ content string }
 
 type model struct {
-	dir            string
-	allEntries     []os.DirEntry
-	entries        []os.DirEntry
-	cursor         int
-	err            error
-	status         string
-	statusErr      bool
-	config         config.Config
-	width          int
-	height         int
-	showPreview    bool
-	previewContent string
-	previewLoading bool
-	showHidden     bool
-	filterInput    textinput.Model
-	filtering      bool
-	sortMode       int
-	previewScroll  int
-	listOffset     int
+	dir              string
+	allEntries       []os.DirEntry
+	entries          []os.DirEntry
+	cursor           int
+	err              error
+	status           string
+	statusErr        bool
+	config           config.Config
+	width            int
+	height           int
+	showPreview      bool
+	previewContent   string
+	previewLoading   bool
+	showHidden       bool
+	filterInput      textinput.Model
+	filtering        bool
+	sortMode         int
+	previewScroll    int
+	listOffset       int
+	cutEntry         os.DirEntry
+	cutDir           string
+	confirmOverwrite bool
 }
 
 func newModel(dir string) model {
@@ -131,15 +134,22 @@ func (m model) withFilters() model {
 	return m.clampListOffset()
 }
 
+func (m model) bottomRowCount() int {
+	rows := 2
+	if m.filtering || m.filterInput.Value() != "" {
+		rows++
+	}
+	if m.cutEntry != nil || m.confirmOverwrite {
+		rows++
+	}
+	return rows
+}
+
 func (m model) visibleFileCount() int {
 	if m.height == 0 {
 		return 20
 	}
-	bottomRows := 2
-	if m.filtering || m.filterInput.Value() != "" {
-		bottomRows = 3
-	}
-	v := m.height - 4 - bottomRows // 4 header rows (tagline+blank+path+blank)
+	v := m.height - 4 - m.bottomRowCount() // 4 header rows (tagline+blank+path+blank)
 	if v < 1 {
 		v = 1
 	}
@@ -187,6 +197,46 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		m.status = ""
 		m.statusErr = false
+
+		if m.confirmOverwrite {
+			switch msg.String() {
+			case "y", "Y":
+				src := filepath.Join(m.cutDir, m.cutEntry.Name())
+				dst := filepath.Join(m.dir, m.cutEntry.Name())
+				m.confirmOverwrite = false
+				if err := os.RemoveAll(dst); err != nil {
+					m.status = fmt.Sprintf("overwrite failed: %v", err)
+					m.statusErr = true
+					break
+				}
+				name := m.cutEntry.Name()
+				if err := moveEntry(src, dst); err != nil {
+					m.status = fmt.Sprintf("move failed: %v", err)
+					m.statusErr = true
+				} else {
+					m.cutEntry = nil
+					m.cutDir = ""
+					if all, err := os.ReadDir(m.dir); err == nil {
+						m.allEntries = all
+						m = m.withFilters()
+						for i, e := range m.entries {
+							if e.Name() == name {
+								m.cursor = i
+								m = m.clampListOffset()
+								break
+							}
+						}
+					}
+				}
+			case "n", "N":
+				m.confirmOverwrite = false
+			case "esc":
+				m.confirmOverwrite = false
+				m.cutEntry = nil
+				m.cutDir = ""
+			}
+			return m, nil
+		}
 
 		if m.filtering {
 			switch msg.String() {
@@ -374,11 +424,66 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.filterInput.Focus()
 			return m, textinput.Blink
 
+		case "x":
+			if len(m.entries) > 0 {
+				m.cutEntry = m.entries[m.cursor]
+				m.cutDir = m.dir
+				m.confirmOverwrite = false
+			}
+
+		case "v":
+			if m.cutEntry != nil {
+				src := filepath.Join(m.cutDir, m.cutEntry.Name())
+				dst := filepath.Join(m.dir, m.cutEntry.Name())
+				if src == dst {
+					m.status = "already here"
+					m.cutEntry = nil
+					m.cutDir = ""
+					break
+				}
+				if m.cutEntry.IsDir() {
+					sep := string(filepath.Separator)
+					if m.dir == src || strings.HasPrefix(m.dir, src+sep) {
+						m.status = "cannot move a directory into itself"
+						break
+					}
+				}
+				if _, statErr := os.Stat(dst); statErr == nil {
+					m.confirmOverwrite = true
+					break
+				}
+				name := m.cutEntry.Name()
+				if err := moveEntry(src, dst); err != nil {
+					m.status = fmt.Sprintf("move failed: %v", err)
+					m.statusErr = true
+				} else {
+					m.cutEntry = nil
+					m.cutDir = ""
+					if all, err := os.ReadDir(m.dir); err == nil {
+						m.allEntries = all
+						m = m.withFilters()
+						for i, e := range m.entries {
+							if e.Name() == name {
+								m.cursor = i
+								m = m.clampListOffset()
+								break
+							}
+						}
+					}
+					needPreview = true
+				}
+			}
+
 		case "esc":
 			if m.filterInput.Value() != "" {
 				m.filterInput.SetValue("")
 				m = m.withFilters()
 				needPreview = true
+			}
+			if m.cutEntry != nil {
+				m.cutEntry = nil
+				m.cutDir = ""
+				m.confirmOverwrite = false
 			}
 
 		case ".":
@@ -545,9 +650,9 @@ func (m model) renderFileList() string {
 	}
 	var hint string
 	if m.showPreview {
-		hint = fmt.Sprintf("enter:go in  o:open  y:path  Y:file  /:filter  .:%-11s  [/]:scroll  p:close  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
+		hint = fmt.Sprintf("enter:go in  o:open  x:cut  y:path  Y:file  /:filter  .:%-11s  [/]:scroll  p:close  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
 	} else {
-		hint = fmt.Sprintf("enter:go in  o:open  y:path  Y:file  /:filter  .:%-11s  p:preview  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
+		hint = fmt.Sprintf("enter:go in  o:open  x:cut  y:path  Y:file  /:filter  .:%-11s  p:preview  s:sorted by %s  H:home  q:quit", dotLabel, sortLabels[m.sortMode])
 	}
 
 	var sb strings.Builder
@@ -555,12 +660,7 @@ func (m model) renderFileList() string {
 
 	if m.height > 0 {
 		linesUsed := strings.Count(top.String(), "\n")
-		// Filter bar (when active or set) sits above the hint — takes one extra row.
-		bottomRows := 2
-		if m.filtering || m.filterInput.Value() != "" {
-			bottomRows = 3
-		}
-		padding := m.height - linesUsed - bottomRows
+		padding := m.height - linesUsed - m.bottomRowCount()
 		for i := 0; i < padding; i++ {
 			sb.WriteByte('\n')
 		}
@@ -571,6 +671,12 @@ func (m model) renderFileList() string {
 	} else if m.filterInput.Value() != "" {
 		sb.WriteString("\n" + filterTagStyle.Render("/"+m.filterInput.Value()) +
 			pathStyle.Render("  esc to clear"))
+	}
+	if m.confirmOverwrite {
+		sb.WriteString("\n" + errorStyle.Render(fmt.Sprintf("'%s' exists here — overwrite? (y/n)", m.cutEntry.Name())))
+	} else if m.cutEntry != nil {
+		sb.WriteString("\n" + filterTagStyle.Render(fmt.Sprintf("moving: %s", m.cutEntry.Name())) +
+			pathStyle.Render("  (v to drop here, esc to cancel)"))
 	}
 	sb.WriteString("\n" + pathStyle.Render(hint))
 	if m.status != "" {

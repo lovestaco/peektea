@@ -69,12 +69,14 @@ Starts in the current working directory.
 | `←` / `h` / `backspace` | go to parent |
 | `H` | go to home directory |
 | `o` | open with configured program |
+| `x` | cut (stage for move) |
+| `v` | paste (move staged entry into current directory) |
 | `y` | copy absolute path to clipboard |
 | `Y` | copy file contents to clipboard (files only) |
 | `p` | toggle preview panel |
 | `[` / `]` | scroll preview up / down |
 | `/` | filter entries as you type |
-| `esc` | exit filter / clear active filter |
+| `esc` | exit filter / clear active filter / cancel staged move |
 | `.` | toggle hidden files (dotfiles) |
 | `s` | cycle sort: name → size → modified |
 | `q` / `ctrl+c` | quit |
