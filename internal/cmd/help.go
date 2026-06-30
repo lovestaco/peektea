@@ -26,7 +26,7 @@ func RunHelp() {
 	fmt.Println("  p               toggle preview panel (text + images via chafa)")
 	fmt.Println("  [  ]            scroll preview up / down")
 	fmt.Println("  /               filter entries as you type")
-	fmt.Println("  esc             exit filter / clear active filter")
+	fmt.Println("  esc             exit filter / clear filter / cancel staged move")
 	fmt.Println("  .               toggle hidden files (dotfiles)")
 	fmt.Println("  s               cycle sort: name → size → modified")
 	fmt.Println("  q    ctrl+c     quit")

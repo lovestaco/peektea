@@ -108,6 +108,24 @@ The left panel auto-widens to fit the longest filename in the current directory.
 
 Press `s` to cycle the sort mode: **name** → **size** (largest first) → **modified** (newest first) → back to name. The current sort is always shown in the hint bar.
 
+## Move
+
+Press `x` to stage the highlighted file or directory for moving. The hint bar confirms what's staged. Navigate to the destination, then press `v` to drop it there. Press `esc` to cancel.
+
+- Name collisions prompt before overwriting: `'name' exists here — overwrite? (y/n)`
+- Pasting in the same directory is a no-op
+- Moving a directory into itself or a descendant is refused
+- Cross-filesystem moves (different mount points) fall back to copy + delete automatically
+
+## Clipboard
+
+| Key | Action |
+|-----|--------|
+| `y` | Copy the absolute path of the highlighted entry |
+| `Y` | Copy the full contents of the highlighted file |
+
+A confirmation is shown in the hint bar after copying. `Y` skips directories and binary files.
+
 ## WSL
 
 Works on Windows Subsystem for Linux. peektea detects WSL automatically and routes file opens through `wslview` (from [wslu](https://wslutiliti.es/wslu/)) if available, otherwise `explorer.exe`. Linux paths are converted to Windows paths via `wslpath` so Windows apps can read them.

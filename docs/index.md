@@ -74,3 +74,5 @@ peektea is built on the [Charm](https://charm.sh/) stack:
 ## Source
 
 peektea is open source on [GitHub](https://github.com/lovestaco/peektea). Issues, stars, and contributions are welcome.
+
+<img src="https://u8views.com/api/v1/github/profiles/66487268/views/day-week-month-total-count.svg" width="0" height="0" alt="">

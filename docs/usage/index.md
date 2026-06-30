@@ -34,6 +34,14 @@ That's it — no flags needed for the basics. From here, everything is keyboard-
 
     Press `s` to cycle between name, size, and modified-time order.
 
+-   [:material-file-move: **Moving files**](moving.md)
+
+    Press `x` to cut, navigate to the destination, press `v` to paste — move anything without typing paths.
+
+-   [:material-clipboard-outline: **Clipboard**](clipboard.md)
+
+    Press `y` to copy a file's path, or `Y` to copy its contents directly to the clipboard.
+
 </div>
 
 See `peektea -h` for the built-in help screen:
