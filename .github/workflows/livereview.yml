@@ -1,0 +1,22 @@
+name: LiveReview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  trigger-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger LiveReview
+        env:
+          LIVEREVIEW_API_KEY: ${{ secrets.LIVEREVIEW_API_KEY }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          test -n "$LIVEREVIEW_API_KEY"
+          curl --fail --show-error --silent \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "X-API-KEY: $LIVEREVIEW_API_KEY" \
+            --data "$(jq -n --arg url "$PR_URL" '{url: $url}')" \
+            https://livereview.hexmos.com/api/v1/connectors/trigger-review
