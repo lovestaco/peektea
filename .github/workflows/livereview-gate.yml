@@ -13,7 +13,7 @@ jobs:
           LIVEREVIEW_API_KEY: ${{ secrets.LIVEREVIEW_API_KEY }}
           ORG_ID: ${{ secrets.LIVEREVIEW_ORG_ID }}
           RULESET_ID: ${{ secrets.LIVEREVIEW_RULESET_ID }}
-          BASE_URL: https://livereview.hexmos.site
+          BASE_URL: https://manual-talent3.apps.hexmos.com
           PR_URL: ${{ github.event.pull_request.html_url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
@@ -27,10 +27,23 @@ jobs:
 
           echo "Waiting for the review to complete and evaluating the gate..."
           for attempt in $(seq 1 30); do
-            REVIEW_ID=$(curl -sf -H "X-API-Key: $LIVEREVIEW_API_KEY" -H "X-Org-Context: $ORG_ID" \
+            COVERAGE_RESP=$(curl -s -w '\n%{http_code}' -H "X-API-Key: $LIVEREVIEW_API_KEY" -H "X-Org-Context: $ORG_ID" \
               -H "Content-Type: application/json" \
               -d "{\"commits\":[\"$HEAD_SHA\"]}" \
-              "$BASE_URL/api/v1/review-coverage" | jq -r '.reports[0].review_id // empty')
+              "$BASE_URL/api/v1/review-coverage")
+            COVERAGE_CODE=$(echo "$COVERAGE_RESP" | tail -1)
+            COVERAGE_BODY=$(echo "$COVERAGE_RESP" | sed '$d')
+
+            if [ "$COVERAGE_CODE" = "401" ] || [ "$COVERAGE_CODE" = "403" ]; then
+              echo "LiveReview: authentication failed (HTTP $COVERAGE_CODE) -- check the LIVEREVIEW_API_KEY/LIVEREVIEW_ORG_ID secrets"
+              echo "$COVERAGE_BODY"
+              exit 1
+            fi
+
+            REVIEW_ID=""
+            if [ "$COVERAGE_CODE" = "200" ]; then
+              REVIEW_ID=$(echo "$COVERAGE_BODY" | jq -r '.reports[0].review_id // empty')
+            fi
 
             if [ -n "$REVIEW_ID" ]; then
               RESP=$(curl -s -w '\n%{http_code}' -H "X-API-Key: $LIVEREVIEW_API_KEY" -H "X-Org-Context: $ORG_ID" \
@@ -51,6 +64,16 @@ jobs:
                   ;;
                 202)
                   echo "  [$attempt/30] review $REVIEW_ID still running, retrying in 10s..."
+                  ;;
+                401|403)
+                  echo "LiveReview: authentication failed (HTTP $CODE) -- check the LIVEREVIEW_API_KEY/LIVEREVIEW_ORG_ID secrets"
+                  echo "$BODY"
+                  exit 1
+                  ;;
+                404)
+                  echo "LiveReview: ruleset or review not found (HTTP 404) -- check the LIVEREVIEW_RULESET_ID secret"
+                  echo "$BODY"
+                  exit 1
                   ;;
                 *)
                   echo "  [$attempt/30] unexpected evaluate response ($CODE): $BODY"
