@@ -18,9 +18,7 @@ func RunUninstall() {
 	config := filepath.Join(home, ".peektea.toml")
 
 	fmt.Println("Uninstalling peektea...")
-	fmt.Print
-	
-	f("  binary: %s\n", bin)
+	fmt.Printf("  binary: %s\n", bin)
 	fmt.Println()
 
 	fmt.Print("Are you sure? [y/N]: ")
