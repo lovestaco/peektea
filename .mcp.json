@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "livereview": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://livereview.hexmos.com/api/mcp",
+        "--header",
+        "X-API-KEY: lr_sarjjfitst5rvlwqijnyl2job45alhafyhpmn3okkfoxufhobl7q"
+      ]
+    }
+  }
+}
