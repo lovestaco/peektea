@@ -1,0 +1,24 @@
+name: LiveReview Gate
+on:
+  pull_request:
+
+jobs:
+  livereview-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate LiveReview ruleset
+        env:
+          LIVEREVIEW_API_KEY: ${{ secrets.LIVEREVIEW_API_KEY }}
+          ORG_ID: "2"
+        run: |
+          REVIEW_ID=$(curl -sf -H "X-API-Key: $LIVEREVIEW_API_KEY" -H "X-Org-Context: $ORG_ID" \
+            -H "Content-Type: application/json" \
+            -d "{\"commits\":[\"$GITHUB_SHA\"]}" \
+            "https://livereview.hexmos.site/api/v1/review-coverage" | jq -r '.reports[0].review_id // empty')
+          if [ -z "$REVIEW_ID" ]; then
+            echo "No LiveReview review found for this commit yet; skipping gate."
+            exit 0
+          fi
+          curl -sf -H "X-API-Key: $LIVEREVIEW_API_KEY" -H "X-Org-Context: $ORG_ID" \
+            "https://livereview.hexmos.site/api/v1/ci-rulesets/1/evaluate?review_id=$REVIEW_ID" \
+            || { echo "LiveReview gate blocked this build"; exit 1; }

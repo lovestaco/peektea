@@ -19,4 +19,4 @@ jobs:
             --header "Content-Type: application/json" \
             --header "X-API-KEY: $LIVEREVIEW_API_KEY" \
             --data "$(jq -n --arg url "$PR_URL" '{url: $url}')" \
-            https://livereview.hexmos.com/api/v1/connectors/trigger-review
+            https://livereview.hexmos.site/api/v1/connectors/trigger-review

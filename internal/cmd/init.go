@@ -22,7 +22,7 @@ var (
 type category struct {
 	label    string
 	comment  string
-	programs []string
+	 []string
 	fallback string
 	keys     []string
 }
@@ -39,7 +39,7 @@ var setupCategories = []category{
 			"_default_config",
 			"_txt_config", "_md_config",
 			"_go_config", "_py_config", "_sh_config", "_js_config", "_ts_config",
-			"_rs_config", "_c_config", "_h_config", "_cpp_config",
+			"_rs_con g", "_h_config", "_cpp_config",
 			"_json_config", "_yaml_config", "_yml_config", "_toml_config",
 			"_html_config", "_css_config",
 		},
@@ -77,8 +77,7 @@ func RunInit() {
 		var ans string
 		fmt.Scanln(&ans)
 		if strings.ToLower(strings.TrimSpace(ans)) != "y" {
-			fmt.Println("keeping existing config.")
-			writeConfig = false
+			fmt.Println("kee e
 		}
 	}
 
